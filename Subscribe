@@ -1,71 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <title>Spin Wheel Mini-Game</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #111;
-  color: #fff;
-  text-align: center;
-  padding: 20px;
-}
-h1, h2 { margin: 20px 0; }
-
-#wheel-container { position: relative; width: 300px; margin: 0 auto; }
-#wheel { width: 100%; height: 300px; border-radius: 50%; transition: transform 5s cubic-bezier(0.33,1,0.68,1); }
-#pointer { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid #ff0; margin: -40px auto 20px auto; }
-
-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  margin: 20px auto;
-  cursor: pointer;
-  background-color: #ff0000;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-}
-button:hover { background-color: #e60000; }
-
-#subscribe { cursor: pointer; width: 250px; border: 3px solid #ff0000; border-radius: 10px; transition: transform 0.2s; margin-top: 30px; }
-#subscribe:hover { transform: scale(1.1); }
-
-#confetti-canvas {
-  position: fixed; top:0; left:0;
-  width:100%; height:100%;
-  pointer-events:none;
-  z-index:9999;
-}
+body {font-family: Arial, sans-serif; background:#111; color:#fff; text-align:center; padding:20px;}
+h1 {margin:20px 0;}
+#wheel-container{position:relative; width:300px; margin:0 auto;}
+#wheel{width:100%; height:300px; border-radius:50%; transition:transform 5s cubic-bezier(0.33,1,0.68,1);} 
+#pointer{width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-bottom:40px solid #ff0;margin:-40px auto 20px;}
+button{padding:10px 20px;font-size:16px;margin:20px auto;cursor:pointer;background:#ff0000;color:#fff;border:none;border-radius:5px;}
+button:hover{background:#e60000;}
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:9999;}
 </style>
 </head>
 <body>
 
-<h1>🎮 Spin the Wheel & Subscribe To win Prizes!</h1>
+<h1>🎮 Spin the Wheel & Subscribe!</h1>
 <div id="pointer"></div>
-
-<div id="wheel-container">
-  <canvas id="wheel"></canvas>
-</div>
-
+<div id="wheel-container"><canvas id="wheel"></canvas></div>
 <button id="spinButton">SPIN 🎉</button>
 
-
-
 <canvas id="confetti-canvas"></canvas>
-<audio id="spinSound" src="spin.mp3"></audio>
+<audio id="spinSound" src="spin.mp3" preload="auto"></audio>
 
 <script>
-// Wheel setup
 const wheelCanvas = document.getElementById('wheel');
 const ctx = wheelCanvas.getContext('2d');
-wheelCanvas.width = 300;
-wheelCanvas.height = 300;
+wheelCanvas.width = 300; wheelCanvas.height = 300;
 
-const spinButton = document.getElementById('spinButton');
-const segments = ["Prize 1","Prize 2","Prize 3","Prize 4","Prize 5","Prize 6"];
+const segments = ['Prize 1','Prize 2','Prize 3','Prize 4','Prize 5','Prize 6'];
 const colors = ['#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff','#00ffff'];
 
 function drawWheel(){
@@ -74,87 +39,102 @@ function drawWheel(){
     ctx.beginPath();
     ctx.moveTo(150,150);
     ctx.fillStyle = colors[i];
-    ctx.arc(150,150,150,(i*(2*Math.PI/len)),((i+1)*(2*Math.PI/len)));
-    ctx.lineTo(150,150);
+    ctx.arc(150,150,150,i*2*Math.PI/len,(i+1)*2*Math.PI/len);
     ctx.fill();
 
     ctx.save();
     ctx.translate(150,150);
-    ctx.rotate((i+0.5)*(2*Math.PI/len));
+    ctx.rotate((i+0.5)*2*Math.PI/len);
     ctx.fillStyle="#111";
-    ctx.font = "bold 14px Arial";
+    ctx.font="bold 14px Arial";
     ctx.textAlign="right";
     ctx.fillText(segments[i],140,5);
     ctx.restore();
   }
 }
+
 drawWheel();
 
-let spinning = false;
-let currentRotation = 0;
-const spinSound = document.getElementById('spinSound');
+let spinning=false; let currentRotation=0;
+const spinSound=document.getElementById('spinSound');
 
-// Confetti setup
-const confettiCanvas = document.getElementById('confetti-canvas');
-const confettiCtx = confettiCanvas.getContext('2d');
-confettiCanvas.width = window.innerWidth;
-confettiCanvas.height = window.innerHeight;
-let confettiParticles = [];
+// Confetti
+const confettiCanvas=document.getElementById('confetti-canvas');
+const cctx=confettiCanvas.getContext('2d');
+confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight;
+let particles=[];
 
-function launchConfetti(){
-  confettiParticles = [];
-  for(let i=0;i<150;i++){
-    confettiParticles.push({
-      x: Math.random()*confettiCanvas.width,
-      y: Math.random()*confettiCanvas.height - confettiCanvas.height,
-      r: Math.random()*6+4,
-      d: Math.random()*150+50,
-      color: colors[Math.floor(Math.random()*colors.length)],
-      tilt: Math.random()*10-10,
-      tiltAngleIncrement: Math.random()*0.07+0.05
+function launchConfetti(callback){
+  particles=[];
+  for(let i=0;i<120;i++){
+    particles.push({
+      x:Math.random()*confettiCanvas.width,
+      y:Math.random()*confettiCanvas.height - confettiCanvas.height,
+      r:Math.random()*6+4,
+      d:Math.random()*150+50,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      tilt:0,
+      tiltAngle:0,
+      tiltInc:Math.random()*0.07+0.05
     });
   }
-  animateConfetti();
-}
 
-function animateConfetti(){
-  confettiCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
-  confettiParticles.forEach(p=>{
-    p.tiltAngle += p.tiltAngleIncrement;
-    p.y += (Math.cos(p.d)+3+ p.r/2)/2;
-    p.tilt = Math.sin(p.tiltAngle)*15;
-    confettiCtx.beginPath();
-    confettiCtx.lineWidth = p.r;
-    confettiCtx.strokeStyle = p.color;
-    confettiCtx.moveTo(p.x + p.tilt + p.r/2, p.y);
-    confettiCtx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r/2);
-    confettiCtx.stroke();
-  });
-  if(confettiParticles.length>0){
-    requestAnimationFrame(animateConfetti);
+  function animate(){
+    cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    let allDone = true;
+    particles.forEach(p=>{
+      p.tiltAngle+=p.tiltInc;
+      p.y+=(Math.cos(p.d)+3+p.r/2)/2;
+      p.tilt=Math.sin(p.tiltAngle)*15;
+      cctx.beginPath();
+      cctx.lineWidth=p.r;
+      cctx.strokeStyle=p.color;
+      cctx.moveTo(p.x+p.tilt,p.y);
+      cctx.lineTo(p.x+p.tilt+5,p.y+10);
+      cctx.stroke();
+      if(p.y < confettiCanvas.height) allDone = false;
+    });
+    if(!allDone){
+      requestAnimationFrame(animate);
+    } else if(callback){
+      callback();
+    }
   }
+  animate();
 }
 
-// Spin wheel
-spinButton.addEventListener('click', ()=>{
-  if(spinning) return;
-  spinning = true;
+function getPrize(rotation){
+  const slice = 360/segments.length;
+  const angle = (360 - (rotation % 360) + slice/2) % 360;
+  return segments[Math.floor(angle/slice)];
+}
 
+spinButton.onclick=()=>{
+  if(spinning) return;
+  spinning=true;
+
+  spinSound.currentTime=0; 
   spinSound.play();
 
-  const randomDegree = Math.floor(Math.random()*360) + 1800;
-  currentRotation += randomDegree;
-  wheelCanvas.style.transition = "transform 5s cubic-bezier(0.33,1,0.68,1)";
-  wheelCanvas.style.transform = `rotate(${currentRotation}deg)`;
+  const deg=Math.floor(Math.random()*360)+1800;
+  currentRotation+=deg;
+  wheelCanvas.style.transform=`rotate(${currentRotation}deg)`;
 
   setTimeout(()=>{
-    spinning = false;
-    launchConfetti();
-    // Open your YouTube subscribe page
-    window.open("https://www.youtube.com/@Jatt-Gammer?sub_confirmation=1", "_blank");
-  },5000);
-});
-</script>
+    spinning=false;
+    const prize=getPrize(currentRotation);
+    alert('🎉 You won: '+prize);
 
+    // Launch confetti then open YouTube after animation completes
+    launchConfetti(()=>{
+      const ytWindow = window.open('https://www.youtube.com/@Jatt-Gammer?sub_confirmation=1','_blank');
+      if(!ytWindow){
+        location.href='https://www.youtube.com/@Jatt-Gammer?sub_confirmation=1';
+      }
+    });
+
+  },5000);
+};
+</script>
 </body>
 </html>
